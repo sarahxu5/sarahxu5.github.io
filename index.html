@@ -1,9 +1,57 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>sarahxu.github.io</title>
-    </head>
-    <body>
-        <h1>Hello World</h1>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>COVID-19 Impact on US States</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <h1>Which US Regions Were Most Affected by COVID-19?</h1>
+
+    <div class="button-container">
+        <button id="scene-btn-1" class="active">1</button>
+        <button id="scene-btn-2">2</button>
+        <button id="scene-btn-3">3</button>
+    </div>
+
+    <div id="scene-1" class="scene active">
+        <div class="chart-container">
+            <div id="line-chart"></div>
+        </div>
+        <div class="text-container">
+            <h2>US State Populations Over Time</h2>
+            <p>This line chart shows the population of all 50 states (1900-present), grouped by region. Notice dips or slowdowns in the lines around 2020—these signal the population impact of COVID-19 in different regions.</p>
+        </div>
+    </div>
+
+    <div id="scene-2" class="scene">
+        <div class="chart-container">
+            <div id="scatter-plot"></div>
+        </div>
+        <div class="text-container">
+            <h2>Median Family Income vs COVID-19 Cases</h2>
+            <p>This scatterplot compares 2020 median family income to the maximum COVID-19 cases per state, colored by region. States in the South with lower incomes tended to have higher case counts.</p>
+        </div>
+    </div>
+
+    <div id="scene-3" class="scene">
+        <div class="chart-container">
+            <div id="state-detail-chart"></div>
+        </div>
+        <div class="text-container">
+            <h2>Explore Individual States</h2>
+            <p>Select a state for an in-depth look at its population trend, COVID cases, deaths, and income. Hover on the state's chart for more details.</p>
+            <select id="state-select"><option value="">Select State</option></select>
+            <div id="state-panel"></div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.0.0/d3-annotation.min.js"></script>
+    <script src="script.js"></script>
+</body>
 </html>

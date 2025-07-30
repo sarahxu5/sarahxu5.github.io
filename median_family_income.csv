@@ -2,7 +2,7 @@
 "All Races (includes Hispanic/Latino), Both Sexes, All Ages, 2019-2023"
 Sorted by Value
 
-State,FIPS,Value (Dollars),Rank within US (of 52 states)
+State,FIPS,Value,Rank within US (of 52 states)
 "United States",00000,"96,922","N/A"
 "Puerto Rico",72001,"30,876","52"
 "Mississippi",28000,"70,821","51"
