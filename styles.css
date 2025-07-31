@@ -15,9 +15,9 @@
 }
 
 .button-container button {
-    background-color: #f3f3f327;
+    background-color: #00000027;
     border: none;
-    color: rgb(67, 67, 67);
+    color: rgb(0, 0, 0);
     padding: 10px 22px;
     text-align: center;
     text-decoration: none;
@@ -30,14 +30,14 @@
 
 .button-container button.active,
 .button-container button:focus {
-    background-color: #f3f3f327;
-    color: #fff;
+    background-color: #00000027;
+    color: #0b0b0b;
     font-weight: bold;
     outline: none;
 }
 
 button:hover {
-    background-color: #737373;
+    background-color: #4f4f4f;
 }
 
 .scene {
