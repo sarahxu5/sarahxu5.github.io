@@ -8,7 +8,6 @@ async function init() {
     const [incomeRaw, populationRaw, regionRaw, covidRaw] = await Promise.all([
         d3.csv("median_family_income.csv", d => ({
             State: d.State,
-            FIPS: d.FIPS,
             Value: +d.Value,
             Rank: +d["Rank within US"]
         })),
@@ -26,7 +25,6 @@ async function init() {
         d3.csv("us_states.csv", d => ({
             Date: new Date(d.Date),
             State: d.State,
-            Fips: d.Fips,
             Cases: +d.Cases,
             Deaths: +d.Deaths
         }))
@@ -182,14 +180,14 @@ async function init() {
             .datum(data)
             .attr("class", "line")
             .attr("d", line)
-            .attr("stroke", "#000")
-            .attr("fill", "none"); // ensure only line, not filled area
+            .attr("stroke", "#fe0000")
+            .attr("fill", "none"); 
         g.selectAll(".point")
             .data(data).enter().append("circle")
             .attr("class", "point")
             .attr("cx", d => x(d.Year))
             .attr("cy", d => y(d.AvgMaxDeaths))
-            .attr("r", 4).attr("fill", "#000");
+            .attr("r", 4).attr("fill", "#fe0000");
         const peak = data.reduce((acc, d) => d.AvgMaxDeaths > acc.AvgMaxDeaths ? d : acc, data[0]);
         const annotationData = [{
             note: {
@@ -222,10 +220,10 @@ async function init() {
             .attr("height", svgHeight);
         const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
         const x = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.income) * 1.1])
+            .domain([60000, 130000])
             .nice().range([0, width]);
         const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.maxCases) * 1.1])
+            .domain([1, 13000000])
             .nice().range([height, 0]);
         g.append("g")
             .attr("transform", `translate(0,${height})`)
@@ -260,7 +258,44 @@ async function init() {
             .attr("fill", d => regionColors[d.region] || regionColors["Unknown"])
             .attr("opacity", 0.8)
             .append("title")
-            .text(d => `${d.State}\nRegion: ${d.region}\nMedian Income: $${d.income.toLocaleString()}\nMax Cases: ${d.maxCases.toLocaleString()}`);
+        const southData = data.filter(d =>
+            d.region === "South" &&
+            d.income <= 95000 && // adjust to your low income threshold
+            d.maxCases >= 7000000 // adjust for "high" cases as fits your data
+        );
+        if (southData.length) {
+            // Compute centroid
+            const avgIncome = d3.mean(southData, d => d.income);
+            const avgCases = d3.mean(southData, d => d.maxCases);
+    
+            const annotationData = [
+                {
+                    note: {
+                        label: "Most lower income but high case states are in the South",
+                        align: "right",
+                        wrap: 200
+                    },
+                    x: x(avgIncome),
+                    y: y(avgCases),
+                    dx: -20, 
+                    dy: 90
+                },
+                {
+                    note: { label: "", align: "right"},
+                    x: x(80000),
+                    y: y(5000000),
+                    dx: 30,
+                    dy: 90
+                  }
+            ];
+            
+            const makeAnnotation = d3.annotation()
+                .annotations(annotationData)
+                .type(d3.annotationCallout);
+            g.append("g")
+                .attr("class", "annotation-group south-annotation")
+                .call(makeAnnotation);
+        }
         // Legend
         const legend = d3.select("#legend");
         Object.entries(regionColors).forEach(([region, color]) => {
@@ -288,7 +323,7 @@ async function init() {
             .attr("height", svgHeight);
         const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
         const x = d3.scaleTime()
-            .domain(d3.extent(deathTimeSeries, d => d.Date))
+            .domain([new Date(2020, 0, 1), new Date(2023, 2, 10)]) 
             .range([0, width]);
         const y = d3.scaleLinear()
             .domain([0, d3.max(deathTimeSeries, d => d.Deaths) * 1.1])
@@ -337,7 +372,7 @@ async function init() {
         tooltip.html(`
             <strong>State:</strong> ${state}<br/>
             <strong>Region:</strong> ${regionVal}<br/>
-            <strong>Population (${latestYear}):</strong> ${pop.toLocaleString ? pop.toLocaleString() : pop}<br/>
+            <strong>Population:</strong> ${pop.toLocaleString ? pop.toLocaleString() : pop}<br/>
             <strong>Median Family Income:</strong> $${incomeVal.toLocaleString ? incomeVal.toLocaleString() : incomeVal}<br/>
             <strong>Max COVID-19 Cases (2020-2023):</strong> ${maxCases.toLocaleString()}<br/>
             <strong>Max COVID-19 Deaths (2020-2023):</strong> ${maxDeaths.toLocaleString()}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>US States COVID-19 &amp; Median Family Income</title>
+    <title>COVID-19 and US State Regions</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
         .scene { display: none; }
@@ -11,11 +11,11 @@
         svg { border: 1px solid #ccc; }
         #state-select { margin: 10px 0; }
         .button-container { margin-top: 20px; text-align: right; }
-        .chart-container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .chart-container { display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 24px; }
         .text-container { display: flex; flex-direction: column; align-items: flex-start; }
         h1, h2 { color: #000; }
         .line { stroke: #fe0000; fill: none; }
-        .legend { font-size: 14px; margin-top: 10px; }
+        .legend { font-size: 14px; margin-top: 10px; left: -100}
         .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
         .legend-color-box { width: 20px; height: 20px; margin-right: 8px; }
     </style>
@@ -46,8 +46,8 @@
             <div id="legend" class="legend"></div>
         </div>
         <div class="text-container">
-            <h2>2: Median Family Income vs Maximum COVID-19 Cases by State</h2>
-            <p>Scatter plot showing each state's median family income versus max COVID-19 cases, colored by US region.</p>
+            <h2>2: Median Family Income vs Maximum COVID-19 Cases (2020-2023) by Region</h2>
+            <p>Scatter plot showing each state's median family income versus max COVID-19 cases, colored by US region. As seen in the chart, most of the lower income, high COVID-19 cases were from the South.</p>
         </div>
     </div>
     <!-- Scene 3: State Details + Interactive Line Chart -->
