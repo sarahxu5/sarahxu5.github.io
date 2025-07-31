@@ -256,7 +256,7 @@ async function init() {
             .text("Median Family Income ($)");
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 10)
+            .attr("y", 5)
             .attr("x", -(margin.top + height / 2))
             .attr("dy", "1em")
             .attr("text-anchor", "middle")
