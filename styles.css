@@ -15,7 +15,7 @@
 }
 
 .button-container button {
-    background-color: #f3f3f389;
+    background-color: #f3f3f327;
     border: none;
     color: white;
     padding: 10px 22px;
@@ -30,7 +30,7 @@
 
 .button-container button.active,
 .button-container button:focus {
-    background-color: #f3f3f389;
+    background-color: #f3f3f327;
     color: #fff;
     font-weight: bold;
     outline: none;
