@@ -220,7 +220,7 @@ async function main() {
             const ann = [
                 {
                     note: {
-                        label: "Many of the lower median family income and higher COVID-19 cases were from the South",
+                        label: "Many of the lower median family income and higher COVID-19 cases were from the South.",
                         wrap: 200
                     },
                     x: centroid.x, y: centroid.y,
