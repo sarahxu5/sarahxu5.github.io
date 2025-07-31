@@ -4,19 +4,19 @@ async function main() {
     // Loading Data
     const [populationRaw, covidRaw, incomeRaw, regionRaw] = await Promise.all([
         d3.csv("state_population.csv", d => ({
-            state: d.state,
-            year: +d.year,
-            population: +d.population
+            state: d.State,
+            year: +d.Year,
+            population: +d.Population
         })),
         d3.csv("us_states.csv", d => ({
-            state: d.state,
-            date: d3.timeParse("%Y-%m-%d")(d.date),
-            cases: +d.cases,
-            deaths: +d.deaths
+            state: d.State,
+            date: d3.timeParse("%Y-%m-%d")(d.Date),
+            cases: +d.Cases,
+            deaths: +d.Deaths
         })),
         d3.csv("median_family_income.csv", d => ({
-            state: d.state,
-            income: +d.value
+            state: d.State,
+            income: +d.Value
         })),
         d3.csv("states_region.csv", d => ({
             state: d.State,
@@ -24,7 +24,7 @@ async function main() {
         }))
     ]);
 
-    // Data lookups
+    // Data lookup
     const stateToRegion = {};
     regionRaw.forEach(d => { stateToRegion[d.state] = d.region; });
 
@@ -246,7 +246,7 @@ async function main() {
         });
     }
 
-    // -------- SCENE 3: Interactive State Details --------
+    // SCENE 3: Interactive State Details
     function renderStateDetail(stateName) {
         d3.select("#state-detail-chart").selectAll("*").remove();
         d3.select("#state-panel").selectAll("*").remove();
@@ -307,7 +307,7 @@ async function main() {
             const makeAnnotations = d3.annotation().type(d3.annotationLabel).annotations(ann);
             g.append("g").call(makeAnnotations);
         }
-        // State detail panel
+        // State detail info
         const panel = d3.select("#state-panel");
         panel.html(`
             <b>${stateName}</b><br>
