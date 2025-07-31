@@ -4,23 +4,23 @@ async function main() {
     // Loading Data
     const [populationRaw, covidRaw, incomeRaw, regionRaw] = await Promise.all([
         d3.csv("state_population.csv", d => ({
-            State: d.State,
-            Year: +d.Year,
-            Population: +d.Population
+            state: d.State,
+            year: +d.Year,
+            population: +d.Population
         })),
         d3.csv("us_states.csv", d => ({
-            State: d.State,
-            Date: d3.timeParse("%Y-%m-%d")(d.Date),
-            Cases: +d.Cases,
-            Deaths: +d.Deaths
+            state: d.State,
+            date: d3.timeParse("%Y-%m-%d")(d.Date),
+            cases: +d.Cases,
+            deaths: +d.Deaths
         })),
         d3.csv("median_family_income.csv", d => ({
-            State: d.State,
-            Income: +d.Value
+            state: d.State,
+            income: +d.Value
         })),
         d3.csv("states_region.csv", d => ({
-            State: d.State,
-            Region: d.Region
+            state: d.State,
+            region: d.Region
         }))
     ]);
 
@@ -42,7 +42,15 @@ async function main() {
             stateCovidStats[d.State].deaths = d.Deaths;
     });
 
-    const allStates = Array.from(new Set(populationRaw.map(d => d.State))).sort();
+    //const allStates = Array.from(new Set(populationRaw.map(d => d.State))).sort();
+    const allStates = Array.from(
+        new Set(
+        populationRaw.filter(d =>
+            incomeRaw.some(i => i.State === d.State) &&
+            regionRaw.some(r => r.State === d.State)
+        ).map(d => d.State)
+        )
+    ).sort();
     // Force consistent region order and colors
     const regions = ["South", "West", "Northeast", "Midwest"];
     const regionColor = d3.scaleOrdinal()
@@ -170,10 +178,10 @@ async function main() {
     function renderScatterPlot() {
         d3.select("#scatter-plot").selectAll("*").remove();
         const data = allStates.map(s => ({
-            State: s,
-            Income: stateToIncome[s],
+            state: s,
+            income: stateToIncome[s],
             maxCases: stateCovidStats[s] ? stateCovidStats[s].maxCases : 0,
-            Region: stateToRegion[s] || "Unknown"
+            region: stateToRegion[s] || "Unknown"
         })).filter(d => d.Income && d.maxCases);
 
         const svg = d3.select("#scatter-plot").append("svg")
@@ -259,12 +267,12 @@ async function main() {
         const region = stateToRegion[stateName] || 'N/A';
 
         const svg = d3.select("#state-detail-chart").append("svg")
-            .attr("width", 420)
-            .attr("height", 280);
+            .attr("width", 900)
+            .attr("height", 600);
 
         const margin = { top: 30, right: 10, bottom: 50, left: 60 },
-            width = 420 - margin.left - margin.right,
-            height = 280 - margin.top - margin.bottom;
+            width = 900 - margin.left - margin.right,
+            height = 600 - margin.top - margin.bottom;
 
         const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
         const x = d3.scaleLinear()
@@ -291,7 +299,7 @@ async function main() {
         if (covid2020) {
             g.append("circle")
                 .attr("cx", x(2020))
-                .attr("cy", y(covid2020.Population))
+                .attr("cy", y(covid2020.population))
                 .attr("r", 8)
                 .attr("fill", "red")
                 .attr("opacity", 0.7);
@@ -302,7 +310,7 @@ async function main() {
                         wrap: 100
                     },
                     x: x(2020),
-                    y: y(covid2020.Population),
+                    y: y(covid2020.population),
                     dx: 35,
                     dy: -40
                 }
