@@ -151,7 +151,7 @@ async function init() {
     // ========== SCENE 1: Average Deaths ==========
     function renderScene1(data) {
         d3.select("#line-chart").selectAll("*").remove();
-        const svgWidth = 800, svgHeight = 600;
+        const svgWidth = 900, svgHeight = 600;
         const margin = { top: 40, right: 40, bottom: 60, left: 70 };
         const width = svgWidth - margin.left - margin.right;
         const height = svgHeight - margin.top - margin.bottom;
@@ -188,6 +188,22 @@ async function init() {
             .attr("cx", d => x(d.Year))
             .attr("cy", d => y(d.AvgMaxDeaths))
             .attr("r", 4).attr("fill", "#fe0000");
+        svg.append("text") // x-axis label
+            .attr("x", margin.left + width / 2)
+            .attr("y", svgHeight - 10)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#000")
+            .style("font-weight", "bold")
+            .text("Year");
+        svg.append("text") // y-axis label
+            .attr("transform", "rotate(-90)")
+            .attr("y", 5) // padding from the left edge
+            .attr("x", -(margin.top + height / 2))
+            .attr("dy", "1em")
+            .attr("text-anchor", "middle")
+            .attr("fill", "#000")
+            .style("font-weight", "bold")
+            .text("Average Max Deaths");
         const peak = data.reduce((acc, d) => d.AvgMaxDeaths > acc.AvgMaxDeaths ? d : acc, data[0]);
         const annotationData = [{
             note: {
@@ -240,7 +256,7 @@ async function init() {
             .text("Median Family Income ($)");
         svg.append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", margin.left / 4)
+            .attr("y", 10)
             .attr("x", -(margin.top + height / 2))
             .attr("dy", "1em")
             .attr("text-anchor", "middle")
@@ -314,7 +330,7 @@ async function init() {
         const deathTimeSeries = stateData.sort((a,b) => a.Date - b.Date);
         d3.select("#state-line-chart").selectAll("*").remove();
         const tooltip = d3.select("#tooltip").style("display", "block");
-        const svgWidth = 800, svgHeight = 600;
+        const svgWidth = 900, svgHeight = 600;
         const margin = { top: 40, right: 40, bottom: 60, left: 70 };
         const width = svgWidth - margin.left - margin.right;
         const height = svgHeight - margin.top - margin.bottom;
@@ -352,6 +368,22 @@ async function init() {
             .style("font-size", "18px")
             .style("fill", "#000")
             .text(`COVID-19 Deaths in ${state} (2020-2023)`);
+        svg.append("text") // x-axis label
+            .attr("x", margin.left + width / 2)
+            .attr("y", svgHeight - 10)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#000")
+            .style("font-weight", "bold")
+            .text("Year");
+        svg.append("text") // y-axis label
+            .attr("transform", "rotate(-90)")
+            .attr("y", 5) // padding from the left edge
+            .attr("x", -(margin.top + height / 2))
+            .attr("dy", "1em")
+            .attr("text-anchor", "middle")
+            .attr("fill", "#000")
+            .style("font-weight", "bold")
+            .text("COVID-19 Deaths");
         const latestYear = 2023;
         let pop = populationByStateYear[state] ? (populationByStateYear[state][latestYear] || "N/A") : "N/A";
         let incomeVal = incomeByState[state] || "N/A";
