@@ -1,55 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>COVID-19 Impact on US States</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>US States COVID-19 &amp; Median Family Income</title>
+    <link rel="stylesheet" href="styles.css" />
     <style>
         body { font-family: Arial, sans-serif; }
+        .scene { display: none; }
+        .active { display: grid; grid-template-columns: 2fr 1fr; grid-gap: 20px; align-items: start; }
+        svg { border: 1px solid #ccc; }
+        #state-select { margin: 10px 0; }
+        .button-container { margin-top: 20px; text-align: right; }
+        .chart-container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .text-container { display: flex; flex-direction: column; align-items: flex-start; }
+        h1, h2 { color: #000; }
+        .line { stroke: #fe0000; fill: none; }
+        .legend { font-size: 14px; margin-top: 10px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+        .legend-color-box { width: 20px; height: 20px; margin-right: 8px; }
+        .tooltip { background: #f9f9f9; border: 1px solid #ccc; padding: 12px; border-radius: 4px; max-width: 300px; font-size: 14px; box-shadow: 2px 2px 6px rgba(0,0,0,0.1); }
+        .scene-btn { background: #000; border: none; color: white; padding: 10px 20px; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px; }
+        .scene-btn.active { background: #444; color: #fff; }
+        .scene-btn:focus { outline: 2px solid #444; }
     </style>
 </head>
 <body>
-    <h1>Which US Regions Were Most Affected by COVID-19?</h1>
+    <h1>US States COVID-19 & Median Family Income</h1>
 
     <div class="button-container">
-        <button id="scene-btn-1" class="active">1</button>
-        <button id="scene-btn-2">2</button>
-        <button id="scene-btn-3">3</button>
+        <button class="scene-btn" data-scene="0">1</button>
+        <button class="scene-btn" data-scene="1">2</button>
+        <button class="scene-btn" data-scene="2">3</button>
     </div>
 
+    <!-- Scene 1: Average Max Deaths Over Time (2020-2023) -->
     <div id="scene-1" class="scene active">
         <div class="chart-container">
             <div id="line-chart"></div>
         </div>
         <div class="text-container">
-            <h2>US State Deaths from COVID-19 Over Time</h2>
-            <p>This line chart shows the number of reported COVID-19 deaths per state over time, grouped by region. Compare trends across the 2020-2022 pandemic period.</p>
+            <h2>1: Average Maximum COVID-19 Deaths Across All US States (2020-2023)</h2>
+            <p>This line chart shows the yearly average of maximum COVID-19 deaths across all US states, with 2023 being the peak.</p>
         </div>
     </div>
-
+    <!-- Scene 2: Median Family Income vs COVID-19 Cases Scatter Plot -->
     <div id="scene-2" class="scene">
         <div class="chart-container">
             <div id="scatter-plot"></div>
+            <div id="legend" class="legend"></div>
         </div>
         <div class="text-container">
-            <h2>Median Family Income vs COVID-19 Cases</h2>
-            <p>This scatterplot compares 2020 median family income to the maximum COVID-19 cases per state, colored by region. States in the South with lower incomes tended to have higher case counts.</p>
+            <h2>2: Median Family Income vs Maximum COVID-19 Cases by State</h2>
+            <p>Scatter plot showing each state's median family income versus max COVID-19 cases, colored by US Census region.</p>
         </div>
     </div>
-
+    <!-- Scene 3: State Details + Interactive Line Chart -->
     <div id="scene-3" class="scene">
-        <div class="chart-container">
-            <div id="state-detail-chart"></div>
+        <div class="chart-container" style="position: relative;">
+            <div id="state-line-chart"></div>
+            <div id="tooltip" class="tooltip" style="display:none; position: absolute; top: 10px; right: 10px;"></div>
         </div>
         <div class="text-container">
-            <h2>Explore Individual States</h2>
-            <p>Select a state for an in-depth look at its population trend, COVID cases, deaths, and income. Hover on the state's chart for more details.</p>
-            <select id="state-select"><option value="">Select State</option></select>
-            <div id="state-panel"></div>
+            <h2>3: Explore Specific US State COVID-19 Data</h2>
+            <p>Select a state to view detailed COVID-19 deaths trends and related demographic information.</p>
+            <select id="state-select">
+                <option value="">Select a State</option>
+            </select>
         </div>
     </div>
-
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.0.0/d3-annotation.min.js"></script>
     <script src="script.js"></script>

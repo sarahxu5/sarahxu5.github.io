@@ -1,316 +1,346 @@
-document.addEventListener('DOMContentLoaded', main);
+document.addEventListener('DOMContentLoaded', init);
 
-async function main() {
-    // 1. Load data with property names exactly matching your CSV headers
-    const [populationRaw, covidRaw, incomeRaw, regionRaw] = await Promise.all([
-        d3.csv("state_population.csv"),
-        d3.csv("us_states.csv"),
-        d3.csv("median_family_income.csv"),
-        d3.csv("states_region.csv")
-    ]);
-
-    // 2. Ensure type conversion
-    populationRaw.forEach(d => {
-        d.Year = +d.Year;
-        d.Population = +d.Population;
-    });
-    covidRaw.forEach(d => {
-        d.Cases = +d.Cases;
-        d.Deaths = +d.Deaths;
-        d.Date = d3.timeParse("%Y-%m-%d")(d.Date);
-    });
-    incomeRaw.forEach(d => { d.Value = +d.Value; });
-
-    // 3. Lookup tables for easy joins by state
-    const stateToRegion = Object.fromEntries(regionRaw.map(d => [d.State, d.Region]));
-    const stateToIncome = Object.fromEntries(incomeRaw.map(d => [d.State, d.Value]));
-
-    // COVID stats lookup
-    const stateCovidStats = {};
-    covidRaw.forEach(d => {
-        if (!stateCovidStats[d.State]) stateCovidStats[d.State] = { maxCases: 0, deaths: 0 };
-        if (d.Cases > stateCovidStats[d.State].maxCases)
-            stateCovidStats[d.State].maxCases = d.Cases;
-        if (d.Deaths > stateCovidStats[d.State].deaths)
-            stateCovidStats[d.State].deaths = d.Deaths;
-    });
-
-    // Only include states present in ALL files
-    const popStates = new Set(populationRaw.map(d => d.State));
-    const covidStates = new Set(covidRaw.map(d => d.State));
-    const incomeStates = new Set(incomeRaw.map(d => d.State));
-    const regionStates = new Set(regionRaw.map(d => d.State));
-    const allStates = Array.from(popStates)
-        .filter(s => covidStates.has(s) && incomeStates.has(s) && regionStates.has(s))
-        .sort();
-
-    // -- FIXED REGION COLOR MAP --
-    const regions = ["South", "West", "Northeast", "Midwest"];
-    const regionColor = d3.scaleOrdinal()
-        .domain(regions)
-        .range(["#e41a1c", "#377eb8", "#ffe12b", "#4ce0f8"]);
-
-    // --- SCENES LOGIC ---
+async function init() {
     const scenes = ['#scene-1', '#scene-2', '#scene-3'];
     let currentScene = 0;
 
-    function showScene(idx) {
-        scenes.forEach((sel, i) =>
-            d3.select(sel).classed('active', i === idx));
-        for (let i = 1; i <= 3; i++)
-            d3.select("#scene-btn-" + i).classed('active', idx === i - 1);
-    }
+    // Load CSVs
+    const [incomeRaw, populationRaw, regionRaw, covidRaw] = await Promise.all([
+        d3.csv("median_family_income.csv", d => ({
+            State: d.State,
+            FIPS: d.FIPS,
+            Value: +d.Value,
+            Rank: +d["Rank within US"]
+        })),
+        d3.csv("state_population.csv", d => ({
+            State: d.State,
+            Year: +d.Year,
+            Population: +d.Population
+        })),
+        d3.csv("states_region.csv", d => ({
+            State: d.State,
+            StateCode: d["State Code"],
+            Region: d.Region,
+            Division: d.Division
+        })),
+        d3.csv("us_states.csv", d => ({
+            Date: new Date(d.Date),
+            State: d.State,
+            Fips: d.Fips,
+            Cases: +d.Cases,
+            Deaths: +d.Deaths
+        }))
+    ]);
 
-    d3.select("#scene-btn-1").on("click", () => { currentScene = 0; showScene(currentScene); renderScene(currentScene); });
-    d3.select("#scene-btn-2").on("click", () => { currentScene = 1; showScene(currentScene); renderScene(currentScene); });
-    d3.select("#scene-btn-3").on("click", () => { currentScene = 2; showScene(currentScene); renderScene(currentScene); });
+    const incomeByState = {};
+    incomeRaw.forEach(d => incomeByState[d.State] = d.Value);
 
-    // Populate State Dropdown
-    const stateSelect = d3.select("#state-select");
-    stateSelect.selectAll("option")
-        .data(allStates)
-        .enter().append("option")
-        .attr("value", d => d)
-        .text(d => d);
-
-    stateSelect.on("change", () => {
-        renderStateDetail(stateSelect.property("value"));
+    const populationByStateYear = {};
+    populationRaw.forEach(d => {
+        if (!populationByStateYear[d.State]) populationByStateYear[d.State] = {};
+        populationByStateYear[d.State][d.Year] = d.Population;
     });
 
-    function renderScene(idx) {
-        if (idx === 0) renderCovidDeathsLineChart();
-        else if (idx === 1) renderScatterPlot();
-        else if (idx === 2) renderStateDetail(stateSelect.property("value") || allStates[0]);
+    const regionByState = {};
+    regionRaw.forEach(d => regionByState[d.State] = d.Region);
+
+    const covidByStateYear = d3.group(covidRaw, d => d.State, d => d.Date.getFullYear());
+
+    // SCENE 1 DATA: Average max deaths per year (2020-2023)
+    const years = [2020, 2021, 2022, 2023];
+    const avgMaxDeathsByYear = years.map(year => {
+        const maxDeathsStates = [];
+        covidByStateYear.forEach((yearMap, state) => {
+            const dataForYear = yearMap.get(year);
+            if (dataForYear) {
+                const maxDeaths = d3.max(dataForYear, d => d.Deaths);
+                maxDeathsStates.push(maxDeaths);
+            }
+        });
+        return {
+            Year: year,
+            AvgMaxDeaths: d3.mean(maxDeathsStates)
+        };
+    });
+
+    // SCENE 2 DATA: Scatter plot (state, income, max cases, region)
+    const maxCasesByState = {};
+    covidByStateYear.forEach((yearMap, state) => {
+        let maxCases = 0;
+        years.forEach(y => {
+            const dataForYear = yearMap.get(y);
+            if (dataForYear) {
+                const maxCasesForYear = d3.max(dataForYear, d => d.Cases);
+                if (maxCasesForYear > maxCases) maxCases = maxCasesForYear;
+            }
+        });
+        maxCasesByState[state] = maxCases;
+    });
+
+    const scatterData = [];
+    Object.keys(incomeByState).forEach(state => {
+        scatterData.push({
+            State: state,
+            income: incomeByState[state],
+            maxCases: maxCasesByState[state] || 0,
+            region: regionByState[state] || "Unknown"
+        });
+    });
+
+    // REGION COLORS
+    const regionColors = {
+        "Northeast": "#1f77b4",
+        "Midwest": "#ff7f0e",
+        "South": "#2ca02c",
+        "West": "#d62728",
+        "Unknown": "#999999",
+    };
+
+    // Populate state dropdown
+    const stateSelect = d3.select("#state-select");
+    Object.keys(incomeByState).sort().forEach(state => {
+        stateSelect.append("option").attr("value", state).text(state);
+    });
+
+    // Scene button handlers
+    d3.selectAll('.scene-btn').on('click', function() {
+        const targetScene = +d3.select(this).attr('data-scene');
+        if (currentScene !== targetScene) {
+            d3.select(scenes[currentScene]).classed('active', false);
+            currentScene = targetScene;
+            d3.select(scenes[currentScene]).classed('active', true);
+            updateScene();
+            updateButtons();
+        }
+    });
+    function updateButtons() {
+        d3.selectAll('.scene-btn').classed('active', (d, i, nodes) =>
+            +nodes[i].getAttribute('data-scene') === currentScene
+        );
     }
-    renderScene(currentScene);
+    updateButtons();
 
-    // --- SCENE 1 ---
-    function renderCovidDeathsLineChart() {
+    stateSelect.on('change', function () {
+        const selectedState = this.value;
+        if (selectedState) {
+            updateScene3(selectedState);
+        } else {
+            d3.select("#state-line-chart").selectAll("*").remove();
+            d3.select("#tooltip").style("display", "none");
+        }
+    });
+
+    // Initial render
+    updateScene();
+
+    function updateScene() {
+        if (currentScene === 0) {
+            renderScene1(avgMaxDeathsByYear);
+        } else if (currentScene === 1) {
+            renderScene2(scatterData);
+        } else if (currentScene === 2) {
+            const selectedState = stateSelect.property('value');
+            if (selectedState) {
+                updateScene3(selectedState);
+            } else {
+                d3.select("#state-line-chart").selectAll("*").remove();
+                d3.select("#tooltip").style("display", "none");
+            }
+        }
+        updateButtons();
+    }
+
+    // ========== SCENE 1: Average Deaths ==========
+    function renderScene1(data) {
         d3.select("#line-chart").selectAll("*").remove();
+        const svgWidth = 800, svgHeight = 600;
+        const margin = { top: 40, right: 40, bottom: 60, left: 70 };
+        const width = svgWidth - margin.left - margin.right;
+        const height = svgHeight - margin.top - margin.bottom;
         const svg = d3.select("#line-chart").append("svg")
-            .attr("width", 900).attr("height", 600);
-        const margin = { top: 30, right: 120, bottom: 60, left: 70 },
-            width = 900 - margin.left - margin.right,
-            height = 600 - margin.top - margin.bottom;
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
         const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-        // Prepare x/y
-        const x = d3.scaleTime()
-            .domain([new Date(2020, 0, 1), new Date(2023, 0, 1)])
+        // Correct: linear scale for years
+        const x = d3.scaleLinear()
+            .domain(d3.extent(data, d => d.Year))
             .range([0, width]);
         const y = d3.scaleLinear()
-            .domain([0, d3.max(covidRaw, d => d.Deaths)])
+            .domain([0, d3.max(data, d => d.AvgMaxDeaths) * 1.1])
             .nice()
             .range([height, 0]);
-
         g.append("g")
             .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x).ticks(d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")));
-        g.append("g").call(d3.axisLeft(y).ticks(8));
-
-        // Draw lines per state (skip states with absent data)
-        const deathsByState = d3.group(covidRaw, d => d.State);
-        for (let state of allStates) {
-            const values = deathsByState.get(state);
-            if (!values) continue;
-            g.append("path")
-                .datum(values)
-                .attr("fill", "none")
-                .attr("stroke", regionColor(stateToRegion[state]))
-                .attr("stroke-width", 2)
-                .attr("class", "state-line")
-                .attr("d", d3.line()
-                    .x(d => x(d.Date))
-                    .y(d => y(d.Deaths))
-                )
-                .attr("opacity", 0.6);
-        }
-
-        g.append("line")
-            .attr("x1", x(new Date(2020, 0, 1)))
-            .attr("x2", x(new Date(2020, 0, 1)))
-            .attr("y1", 0).attr("y2", height)
-            .attr("stroke", "#444").attr("stroke-dasharray", "4,2")
-            .attr("stroke-width", 2);
-        g.append("text")
-            .attr("x", x(new Date(2020, 0, 1)) + 8).attr("y", 25)
-            .attr("fill", "#444")
-            .attr("font-size", 16)
-            .text("Pandemic begins: 2020");
-
-        // Legend
-        const legend = svg.append("g").attr("transform", `translate(${width + margin.left + 10},${margin.top})`);
-        regions.forEach((r, i) => {
-            legend.append("rect")
-                .attr("x", 0).attr("y", i * 24).attr("width", 18).attr("height", 18)
-                .attr("fill", regionColor(r));
-            legend.append("text")
-                .attr("x", 24).attr("y", i * 24 + 14)
-                .text(r)
-                .style("font-size", "15px");
-        });
+            .call(d3.axisBottom(x).ticks(data.length).tickFormat(d3.format("d")))
+            .selectAll("text")
+            .attr("transform", "rotate(-45)").style("text-anchor", "end");
+        g.append("g").call(d3.axisLeft(y));
+        const line = d3.line()
+            .x(d => x(d.Year))
+            .y(d => y(d.AvgMaxDeaths));
+        g.append("path")
+            .datum(data)
+            .attr("class", "line")
+            .attr("d", line)
+            .attr("stroke", "#000")
+            .attr("fill", "none"); // ensure only line, not filled area
+        g.selectAll(".point")
+            .data(data).enter().append("circle")
+            .attr("class", "point")
+            .attr("cx", d => x(d.Year))
+            .attr("cy", d => y(d.AvgMaxDeaths))
+            .attr("r", 4).attr("fill", "#000");
+        const peak = data.reduce((acc, d) => d.AvgMaxDeaths > acc.AvgMaxDeaths ? d : acc, data[0]);
+        const annotationData = [{
+            note: {
+                label: `Peak Avg Deaths: ${peak.AvgMaxDeaths.toFixed(0)} in ${peak.Year}`,
+                align: "middle",
+                wrap: 180
+            },
+            x: x(peak.Year),
+            y: y(peak.AvgMaxDeaths),
+            dy: -40, dx: -100
+        }];
+        const makeAnnotation = d3.annotation()
+            .annotations(annotationData)
+            .type(d3.annotationLabel);
+        g.append("g")
+            .attr("class", "annotation-group")
+            .call(makeAnnotation);
     }
 
-    // --- SCENE 2 ---
-    function renderScatterPlot() {
+    // ========== SCENE 2: Scatter ==========
+    function renderScene2(data) {
         d3.select("#scatter-plot").selectAll("*").remove();
-        const data = allStates.map(s => ({
-            state: s,
-            income: stateToIncome[s],
-            maxCases: stateCovidStats[s]?.maxCases,
-            region: stateToRegion[s]
-        })).filter(d =>
-            d.income !== undefined && d.maxCases !== undefined && d.region !== undefined
-        );
-
+        d3.select("#legend").selectAll("*").remove();
+        const svgWidth = 800, svgHeight = 600;
+        const margin = { top: 40, right: 150, bottom: 60, left: 70 };
+        const width = svgWidth - margin.left - margin.right;
+        const height = svgHeight - margin.top - margin.bottom;
         const svg = d3.select("#scatter-plot").append("svg")
-            .attr("width", 900).attr("height", 600);
-        const margin = { top: 30, right: 150, bottom: 60, left: 70 },
-            width = 900 - margin.left - margin.right,
-            height = 600 - margin.top - margin.bottom,
-            g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
         const x = d3.scaleLinear()
-            .domain(d3.extent(data, d => d.income)).nice()
-            .range([0, width]);
+            .domain([0, d3.max(data, d => d.income) * 1.1])
+            .nice().range([0, width]);
         const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d.maxCases)]).nice()
-            .range([height, 0]);
-
+            .domain([0, d3.max(data, d => d.maxCases) * 1.1])
+            .nice().range([height, 0]);
         g.append("g")
             .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x));
-        g.append("g").call(d3.axisLeft(y));
-
-        g.selectAll("circle")
+            .call(d3.axisBottom(x).tickFormat(d3.format("$.2s")))
+            .selectAll("text")
+            .attr("transform", "rotate(-45)").style("text-anchor", "end");
+        g.append("g").call(d3.axisLeft(y).tickFormat(d3.format(".2s")));
+        svg.append("text")
+            .attr("x", margin.left + width / 2)
+            .attr("y", svgHeight - 10)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#000")
+            .style("font-weight", "bold")
+            .text("Median Family Income ($)");
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", margin.left / 4)
+            .attr("x", -(margin.top + height / 2))
+            .attr("dy", "1em")
+            .attr("text-anchor", "middle")
+            .attr("fill", "#000")
+            .style("font-weight", "bold")
+            .text("Max COVID-19 Cases");
+        g.selectAll(".dot")
             .data(data)
             .enter()
             .append("circle")
+            .attr("class", "dot")
             .attr("cx", d => x(d.income))
             .attr("cy", d => y(d.maxCases))
-            .attr("r", 8)
-            .attr("fill", d => regionColor(d.region))
+            .attr("r", 5)
+            .attr("fill", d => regionColors[d.region] || regionColors["Unknown"])
             .attr("opacity", 0.8)
-            .attr("stroke", "#333")
-            .on("mouseover", function (e, d) {
-                d3.select(this).attr("stroke-width", 3);
-                showTooltip(`${d.state}<br>Income: $${d.income.toLocaleString()}<br>Cases: ${d.maxCases.toLocaleString()}`, e.pageX, e.pageY);
-            })
-            .on("mouseout", function () {
-                d3.select(this).attr("stroke-width", 1);
-                hideTooltip();
-            });
-
-        // Highlight annotation for South, low-income/high-cases
-        const incomes = data.map(d => d.income).sort((a, b) => a - b);
-        const cases = data.map(d => d.maxCases).sort((a, b) => a - b);
-        const incomeQ = d3.quantile(incomes, 0.4);
-        const casesQ = d3.quantile(cases, 0.6);
-        const southStates = data.filter(d => d.region === "South" && d.income < incomeQ && d.maxCases > casesQ);
-        if (southStates.length > 0) {
-            const centroid = {
-                x: d3.mean(southStates, d => x(d.income)),
-                y: d3.mean(southStates, d => y(d.maxCases))
-            };
-            const makeAnnotations = d3.annotation().type(d3.annotationLabel).annotations([{
-                note: { label: "Many lower-income, higher-case states are in the South.", wrap: 200 },
-                x: centroid.x, y: centroid.y, dx: 80, dy: -100
-            }]);
-            g.append("g").call(makeAnnotations);
-        }
+            .append("title")
+            .text(d => `${d.State}\nRegion: ${d.region}\nMedian Income: $${d.income.toLocaleString()}\nMax Cases: ${d.maxCases.toLocaleString()}`);
         // Legend
-        const legend = svg.append("g").attr("transform", `translate(${width + margin.left + 30},${margin.top})`);
-        regions.forEach((r, i) => {
-            legend.append("rect")
-                .attr("x", 0).attr("y", i * 24).attr("width", 18).attr("height", 18)
-                .attr("fill", regionColor(r));
-            legend.append("text")
-                .attr("x", 24).attr("y", i * 24 + 14)
-                .text(r)
-                .style("font-size", "15px");
+        const legend = d3.select("#legend");
+        Object.entries(regionColors).forEach(([region, color]) => {
+            if (region === "Unknown") return;
+            const item = legend.append("div").attr("class", "legend-item");
+            item.append("div")
+                .attr("class", "legend-color-box")
+                .style("background-color", color);
+            item.append("div").text(region);
         });
     }
 
-    // --- SCENE 3 ---
-    function renderStateDetail(stateName) {
-        d3.select("#state-detail-chart").selectAll("*").remove();
-        d3.select("#state-panel").selectAll("*").remove();
-        const popSeries = populationRaw.filter(d => d.State === stateName);
-        const covid = stateCovidStats[stateName] || { maxCases: 0, deaths: 0 };
-        const income = stateToIncome[stateName] !== undefined ? stateToIncome[stateName] : 'N/A';
-        const region = stateToRegion[stateName] !== undefined ? stateToRegion[stateName] : 'N/A';
-
-        const svg = d3.select("#state-detail-chart").append("svg")
-            .attr("width", 900)
-            .attr("height", 600);
-
-        const margin = { top: 30, right: 10, bottom: 50, left: 60 },
-            width = 900 - margin.left - margin.right,
-            height = 600 - margin.top - margin.bottom;
-
+    // ========== SCENE 3: STATE DETAIL ==========
+    function updateScene3(state) {
+        const stateData = covidRaw.filter(d => d.State === state && d.Date.getFullYear() >= 2020 && d.Date.getFullYear() <= 2023);
+        const deathTimeSeries = stateData.sort((a,b) => a.Date - b.Date);
+        d3.select("#state-line-chart").selectAll("*").remove();
+        const tooltip = d3.select("#tooltip").style("display", "block");
+        const svgWidth = 800, svgHeight = 600;
+        const margin = { top: 40, right: 40, bottom: 60, left: 70 };
+        const width = svgWidth - margin.left - margin.right;
+        const height = svgHeight - margin.top - margin.bottom;
+        const svg = d3.select("#state-line-chart").append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
         const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-        const x = d3.scaleLinear()
-            .domain(d3.extent(popSeries, d => d.Year)).nice()
+        const x = d3.scaleTime()
+            .domain(d3.extent(deathTimeSeries, d => d.Date))
             .range([0, width]);
         const y = d3.scaleLinear()
-            .domain([0, d3.max(popSeries, d => d.Population)]).nice()
+            .domain([0, d3.max(deathTimeSeries, d => d.Deaths) * 1.1])
+            .nice()
             .range([height, 0]);
-
-        g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")).ticks(6));
-        g.append("g").call(d3.axisLeft(y).ticks(5));
-
+        g.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x).ticks(d3.timeYear.every(1)).tickFormat(d3.timeFormat("%Y")))
+            .selectAll("text")
+            .attr("transform", "rotate(-45)").style("text-anchor", "end");
+        g.append("g")
+            .call(d3.axisLeft(y));
+        const lineDeaths = d3.line()
+            .x(d => x(d.Date))
+            .y(d => y(d.Deaths));
         g.append("path")
-            .datum(popSeries)
-            .attr("fill", "none")
-            .attr("stroke", regionColor(region))
-            .attr("stroke-width", 4)
-            .attr("d", d3.line().x(d => x(d.Year)).y(d => y(d.Population)));
-
-        let covid2020 = popSeries.find(d => d.Year === 2020);
-        if (covid2020) {
-            g.append("circle")
-                .attr("cx", x(2020))
-                .attr("cy", y(covid2020.Population))
-                .attr("r", 8)
-                .attr("fill", "red")
-                .attr("opacity", 0.7);
-            const ann = [
-                {
-                    note: { label: "COVID-19 impact in 2020", wrap: 100 },
-                    x: x(2020), y: y(covid2020.Population), dx: 35, dy: -40
+            .datum(deathTimeSeries)
+            .attr("class", "line")
+            .attr("d", lineDeaths)
+            .attr("stroke", "#000")
+            .attr("fill", "none");
+        svg.append("text")
+            .attr("x", svgWidth / 2)
+            .attr("y", margin.top / 2)
+            .attr("text-anchor", "middle")
+            .style("font-size", "18px")
+            .style("fill", "#000")
+            .text(`COVID-19 Deaths in ${state} (2020-2023)`);
+        const latestYear = 2023;
+        let pop = populationByStateYear[state] ? (populationByStateYear[state][latestYear] || "N/A") : "N/A";
+        let incomeVal = incomeByState[state] || "N/A";
+        let regionVal = regionByState[state] || "Unknown";
+        const covidStateData = covidByStateYear.get(state);
+        let maxCases = 0, maxDeaths = 0;
+        if (covidStateData) {
+            years.forEach(y => {
+                const dataForY = covidStateData.get(y);
+                if (dataForY) {
+                    const maxC = d3.max(dataForY, d => d.Cases);
+                    const maxD = d3.max(dataForY, d => d.Deaths);
+                    if (maxC > maxCases) maxCases = maxC;
+                    if (maxD > maxDeaths) maxDeaths = maxD;
                 }
-            ];
-            const makeAnnotations = d3.annotation().type(d3.annotationLabel).annotations(ann);
-            g.append("g").call(makeAnnotations);
+            });
         }
-        // State detail info
-        const panel = d3.select("#state-panel");
-        panel.html(`
-            <b>${stateName}</b><br>
-            Region: ${region}<br>
-            Median Family Income: $${income === 'N/A' ? income : income.toLocaleString()}<br>
-            Max COVID-19 Cases: ${covid.maxCases ? covid.maxCases.toLocaleString() : 'N/A'}<br>
-            Total COVID-19 Deaths: ${covid.deaths ? covid.deaths.toLocaleString() : 'N/A'}<br>
+        tooltip.html(`
+            <strong>State:</strong> ${state}<br/>
+            <strong>Region:</strong> ${regionVal}<br/>
+            <strong>Population (${latestYear}):</strong> ${pop.toLocaleString ? pop.toLocaleString() : pop}<br/>
+            <strong>Median Family Income:</strong> $${incomeVal.toLocaleString ? incomeVal.toLocaleString() : incomeVal}<br/>
+            <strong>Max COVID-19 Cases (2020-2023):</strong> ${maxCases.toLocaleString()}<br/>
+            <strong>Max COVID-19 Deaths (2020-2023):</strong> ${maxDeaths.toLocaleString()}
         `);
-    }
-
-    // Tooltips
-    function showTooltip(html, x, y) {
-        let tip = d3.select("body").selectAll(".d3-tip").data([null]);
-        tip = tip.enter().append("div").attr("class", "d3-tip").merge(tip);
-        tip.html(html)
-            .style("position", "absolute")
-            .style("background", "#fff")
-            .style("border", "1px solid #999")
-            .style("padding", "8px")
-            .style("pointer-events", "none")
-            .style("border-radius", "6px")
-            .style("left", (x + 12) + "px")
-            .style("top", (y - 28) + "px")
-            .style("font-size", "15px")
-            .style("z-index", 1000);
-    }
-    function hideTooltip() {
-        d3.selectAll(".d3-tip").remove();
     }
 }

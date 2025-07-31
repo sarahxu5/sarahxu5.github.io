@@ -1,10 +1,4 @@
-﻿Income (Median family income) by State
-"All Races (includes Hispanic/Latino), Both Sexes, All Ages, 2019-2023"
-Sorted by Value
-
-State,FIPS,Value,Rank within US (of 52 states)
-"United States",00000,"96,922","N/A"
-"Puerto Rico",72001,"30,876","52"
+﻿State,FIPS,Value,Rank within US
 "Mississippi",28000,"70,821","51"
 "Arkansas",05000,"74,536","50"
 "West Virginia",54000,"74,981","49"
@@ -55,13 +49,3 @@ State,FIPS,Value,Rank within US (of 52 states)
 "New Jersey",34000,"123,892","4"
 "Maryland",24000,"124,487","3"
 "Massachusetts",25000,"128,134","2"
-"District of Columbia",11001,"150,381","1"
-
-Suggested Citation:
-HDPulse: An Ecosystem of Minority Health and Health Disparities Resources. National Institute on Minority Health and Health Disparities. Created 7/30/2025. Available from https://hdpulse.nimhd.nih.gov
-
-Notes:
-"NA: Data not available [http://hdpulse.nimhd.nih.gov/data/datanotavailable.html] for this combination of geography, cancer site, age, and race/ethnicity."
-Source: Demographic data provided by the Census Bureau (http://www.census.gov/) & the American Community Survey (http://www.census.gov/acs/www/).
-"For more information about Income (Median family income), see the dictionary at http://hdpulse.nimhd.nih.gov/dictionary.php#income."
-"Median Incomes over 250,000 have been coded to 250,001 by the Census Bureau. [ http://www2.census.gov/acs2012_5yr/summaryfile/ACS_2008-2012_SF_Tech_Doc.pdf ]"

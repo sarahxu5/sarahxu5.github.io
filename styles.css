@@ -5,44 +5,13 @@
     display: flex;
     justify-content: center;
 }
-
 .button-container {
     width: 80%;
     margin: 0 auto 20px auto;
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    justify-content: flex-end;
 }
-
-.button-container button {
-    background-color: #00000027;
-    border: none;
-    color: rgb(0, 0, 0);
-    padding: 10px 22px;
-    text-align: center;
-    text-decoration: none;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 4px;
-    margin: 4px 2px;
-    transition: background 0.2s;
-}
-
-.button-container button.active,
-.button-container button:focus {
-    background-color: #00000027;
-    color: #0b0b0b;
-    font-weight: bold;
-    outline: none;
-}
-
-button:hover {
-    background-color: #4f4f4f;
-}
-
-.scene {
-    display: none;
-}
+.scene { display: none; }
 
 .active {
     display: grid;
@@ -50,63 +19,44 @@ button:hover {
     grid-gap: 20px;
     align-items: start;
 }
-
 .chart-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
-
 .text-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
-
 svg {
     border: 1px solid #ccc;
 }
-
 #state-select {
-    margin: 12px 0 8px 0;
-    padding: 6px;
-    font-size: 16px;
+    margin: 10px 0;
 }
-
-h1 {
+button, .scene-btn {
+    background-color: #000;
+    border: none;
+    color: white;
+    padding: 10px 20px;
     text-align: center;
-    color: #000000;
-    margin-bottom: 20px;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
 }
-
-.axis text {
-    font-size: 12px;
-}
-
-.axis path, .axis line {
-    shape-rendering: crispEdges;
-}
-
-.line {
-    fill: none;
-    stroke: rgb(0, 0, 0);
-    stroke-width: 1.5;
-}
-
-.annotation-group text {
-    font-size: 14px;
-    fill: #333;
-}
-
-.axis path {
-    stroke: #ddd;
-}
-
-.d3-tip {
-    background: #fff;
-    border: 1px solid #999;
-    border-radius: 6px;
-    font-size: 15px;
-    color: #000;
-}
+.scene-btn.active { background: #444; color: #fff; }
+button:hover, .scene-btn:hover { background-color: #444; }
+h1 { text-align: center; color: #000; margin-bottom: 20px; }
+h2 { color: #000; }
+.axis text { font-size: 12px; fill: #000; }
+.axis path, .axis line { shape-rendering: crispEdges; stroke: #ddd; }
+.line { fill: none; stroke: #000; stroke-width: 1.5; }
+.bar { fill: #000; }
+.annotation-group text { font-size: 14px; fill: #333; }
+.legend { font-size: 14px; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; margin-bottom: 5px; }
+.legend-color-box { width: 20px; height: 20px; margin-right: 8px; }
+.tooltip { background: #f9f9f9; border: 1px solid #ccc; padding: 12px; border-radius: 4px; max-width: 300px; font-size: 14px; box-shadow: 2px 2px 6px rgba(0,0,0,0.1); }
