@@ -90,7 +90,7 @@ h1 {
 
 .line {
     fill: none;
-    stroke: steelblue;
+    stroke: rgb(0, 0, 0);
     stroke-width: 1.5;
 }
 
