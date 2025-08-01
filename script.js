@@ -439,7 +439,7 @@ async function init() {
                 .attr("text-anchor", "middle")
                 .attr("fill", "#000")
                 .style("font-weight", "bold")
-                .text("Average Max Cases");
+                .text("Max COVID-19 Cases");
     
             svg.append("text")
                 .attr("x", svgWidth / 2)
