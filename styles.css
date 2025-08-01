@@ -14,12 +14,10 @@
 .scene { display: none; }
 
 .active {
-    display: flex;
-    grid-template-columns: 0.5fr 3fr;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 2fr 1fr; 
     grid-gap: 20px;
-    align-items: center;
-    width: 100%;
+    align-items: start;
 }
 
 .chart-container {
@@ -28,18 +26,21 @@
     justify-content: center;
     align-items: center;
 }
+
 .text-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
 }
+
 svg {
     border: 1px solid #ccc;
 }
+
 #state-select {
     margin: 10px 0;
 }
+
 button, .scene-btn {
     background-color: #000;
     border: none;
@@ -51,6 +52,7 @@ button, .scene-btn {
     cursor: pointer;
     border-radius: 4px;
 }
+
 .scene-btn.active { background: #444; color: #fff; }
 button:hover, .scene-btn:hover { background-color: #444; }
 h1 { text-align: center; color: #000; margin-bottom: 20px; }
