@@ -5,7 +5,7 @@ async function init() {
     let currentScene = 0;
     const years = [2020, 2021, 2022, 2023];
 
-    // Load CSV data
+    // loading CSV data
     const [incomeRaw, populationRaw, regionRaw, covidRaw] = await Promise.all([
         d3.csv("median_family_income.csv", d => ({
             State: d.State,
@@ -45,7 +45,7 @@ async function init() {
 
     const covidByStateYear = d3.group(covidRaw, d => d.State, d => d.Date.getFullYear());
 
-    // SCENE 1 DATA: Average max CASES per year (2020-2023)
+    // SCENE 1 DATA: average max cases per year (2020-2023)
     const avgMaxCasesByYear = years.map(year => {
         const maxCasesStates = [];
         covidByStateYear.forEach((yearMap, state) => {
@@ -61,7 +61,7 @@ async function init() {
         };
     });
 
-    // SCENE 2 DATA: Scatter plot (state, income, max cases, region)
+    // SCENE 2 DATA: scatter plot (state, income, max cases, region)
     const maxCasesByState = {};
     covidByStateYear.forEach((yearMap, state) => {
         let maxCases = 0;
@@ -93,13 +93,13 @@ async function init() {
         "West": "#d62728",
     };
 
-    // Populate state dropdown
+    // populate state dropdown
     const stateSelect = d3.select("#state-select");
     Object.keys(incomeByState).sort().forEach(state => {
         stateSelect.append("option").attr("value", state).text(state);
     });
 
-    // Scene button handlers
+    // scene button handlers
     d3.selectAll('.scene-btn').on('click', function() {
         const targetScene = +d3.select(this).attr('data-scene');
         if (currentScene !== targetScene) {
@@ -119,10 +119,10 @@ async function init() {
 
     stateSelect.on('change', function () {
         const selectedState = this.value;
-        updateScene3(selectedState); // Always call, even if no state is selected
+        updateScene3(selectedState); // always call, even if no state is selected
     });
 
-    // Initial render
+    // initial render
     updateScene();
 
     function updateScene() {
@@ -131,7 +131,7 @@ async function init() {
         } else if (currentScene === 1) {
             renderScene2(scatterData);
         } else if (currentScene === 2) {
-            // Always call updateScene3, passing the currently selected state or nothing
+            // always call updateScene3, passing the currently selected state or nothing
             const selectedState = stateSelect.property('value');
             updateScene3(selectedState);
         }
@@ -300,7 +300,7 @@ async function init() {
                 .attr("class", "annotation-group south-annotation")
                 .call(makeAnnotation);
         }
-        // Legend
+        // legend
         const legend = d3.select("#legend");
         Object.entries(regionColors).forEach(([region, color]) => {
             if (region === "Unknown") return;
@@ -379,15 +379,15 @@ async function init() {
                 .style("fill", "#000")
                 .text(`Average Max COVID-19 Cases Across All U.S. States`);
     
-            // Hide tooltip if present
+            // hide tooltip if present
             d3.select("#tooltip").style("display", "none");
         } else {
-            // State selected: show year vs. COVID-19 CASES for that state
+            // state selected: showing year vs. COVID-19 CASES for that state
             const stateData = covidRaw
                 .filter(d => d.State === state && d.Date.getFullYear() >= 2020 && d.Date.getFullYear() <= 2023)
                 .sort((a, b) => a.Date - b.Date);
     
-            // Group by year, pick the maximum cases per year
+            // group by year, pick the maximum cases per year
             const yearlyCasesArr = years.map(year => {
                 const dataYear = stateData.filter(d => d.Date.getFullYear() === year);
                 return {
@@ -449,9 +449,9 @@ async function init() {
                 .style("fill", "#000")
                 .text(`COVID-19 Max Cases in ${state} (2020-2023)`);
     
-            // Show tooltip with state stats
+            // show tooltip with state stats
             const tooltip = d3.select("#tooltip").style("display", "block");
-            // Get population, income, region
+            // get population, income, region
             const latestYear = 2023;
             let pop = populationByStateYear[state] ? (populationByStateYear[state][latestYear] || "N/A") : "N/A";
             let incomeVal = incomeByState[state] || "N/A";
