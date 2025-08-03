@@ -490,7 +490,7 @@ async function init() {
             const peak = maxCasesPerMonth.reduce((acc, d) => d.MaxCases > acc.MaxCases ? d : acc, maxCasesPerMonth[0]);
             const annotationData = [{
                 note: {
-                    label: `Peak: ${peak.MaxCases.toLocaleString()} cases (${d3.timeFormat("%b %Y")(peak.Month)})`,
+                    label: `Peak Cases: ${peak.MaxCases.toLocaleString()} (${d3.timeFormat("%b %Y")(peak.Month)})`,
                     align: "middle",
                     wrap: 180
                 },
