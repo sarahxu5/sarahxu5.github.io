@@ -407,6 +407,13 @@ async function init() {
                 .attr("fill", "#000")
                 .style("font-weight", "bold")
                 .text("Average Max COVID-19 Cases");
+            svg.append("text")
+                .attr("x", svgWidth / 2)
+                .attr("y", margin.top / 2)
+                .attr("text-anchor", "middle")
+                .style("font-size", "18px")
+                .style("fill", "#000")
+                .text(`Average Max COVID-19 Cases Across All U.S. States (2020-2023)`);
     
             d3.select("#tooltip").style("display", "none"); // hide tooltip if present
         } else {
@@ -480,7 +487,7 @@ async function init() {
                 .attr("text-anchor", "middle")
                 .style("font-size", "18px")
                 .style("fill", "#000")
-                .text(`COVID-19 Max Cases in ${state} (2020-2023)`);
+                .text(`Max COVID-19 Cases in ${state} (2020-2023)`);
 
             // show tooltip with state stats
             const tooltip = d3.select("#tooltip").style("display", "block");
