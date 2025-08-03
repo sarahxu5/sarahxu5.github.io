@@ -222,8 +222,8 @@ async function init() {
 
         const peak = data.reduce((acc, d) => d.AvgMaxCases > acc.AvgMaxCases ? d : acc, data[0]);
         const annotationData = [{
-            note: {
-                label: `Peak Avg Cases: ${Math.round(peak.AvgMaxCases)} (${d3.timeFormat("%b %Y")(peak.Month)})`,
+            note: { 
+                label: `Peak Avg Cases: ${Math.round(peak.AvgMaxCases).toLocaleString()} (${d3.timeFormat("%b %Y")(peak.Month)})`,
                 align: "middle",
                 wrap: 180
             },
@@ -287,7 +287,7 @@ async function init() {
             .attr("r", 5)
             .attr("fill", d => regionColors[d.region] || regionColors["Unknown"])
             .attr("opacity", 0.8)
-            .append("title")
+            .append("title");
         const southData = data.filter(d =>
             d.region === "South" &&
             d.income <= 95000 && // low income threshold
@@ -296,7 +296,7 @@ async function init() {
         if (southData.length) {
             const avgIncome = d3.mean(southData, d => d.income);
             const avgCases = d3.mean(southData, d => d.maxCases);
-    
+
             const annotationData = [
                 {
                     note: {
@@ -317,7 +317,7 @@ async function init() {
                     dy: 90
                 }
             ];
-            
+
             const makeAnnotation = d3.annotation()
                 .annotations(annotationData)
                 .type(d3.annotationCallout);
@@ -358,7 +358,7 @@ async function init() {
                 .domain([0, d3.max(data, d => d.AvgMaxCases) * 1.1])
                 .nice()
                 .range([height, 0]);
-                g.append("g")
+            g.append("g")
                 .attr("transform", `translate(0,${height})`)
                 .call(
                     d3.axisBottom(x)
@@ -368,20 +368,20 @@ async function init() {
                 .selectAll("text")
                 .attr("transform", "rotate(-45)")
                 .style("text-anchor", "end");
-    
+
             g.append("g").call(d3.axisLeft(y));
-    
+
             const line = d3.line()
                 .x(d => x(d.Month))
                 .y(d => y(d.AvgMaxCases));
-    
+
             g.append("path")
                 .datum(data)
                 .attr("class", "line")
                 .attr("d", line)
                 .attr("stroke", "#fe0000")
                 .attr("fill", "none");
-    
+
             g.selectAll(".point")
                 .data(data)
                 .enter().append("circle")
@@ -389,7 +389,7 @@ async function init() {
                 .attr("cx", d => x(d.Month))
                 .attr("cy", d => y(d.AvgMaxCases))
                 .attr("r", 2).attr("fill", "#fe0000");
-    
+
             svg.append("text")
                 .attr("x", margin.left + width / 2)
                 .attr("y", svgHeight - 10)
@@ -397,7 +397,7 @@ async function init() {
                 .attr("fill", "#000")
                 .style("font-weight", "bold")
                 .text("Month");
-    
+
             svg.append("text")
                 .attr("transform", "rotate(-90)")
                 .attr("y", 1)
@@ -414,8 +414,23 @@ async function init() {
                 .style("font-size", "18px")
                 .style("fill", "#000")
                 .text(`Average Max COVID-19 Cases Across All U.S. States (2020-2023)`);
-    
-            d3.select("#tooltip").style("display", "none"); // hide tooltip if present
+            const peak = data.reduce((acc, d) => d.AvgMaxCases > acc.AvgMaxCases ? d : acc, data[0]);
+            const annotationData = [{
+                note: {
+                    label: `Peak Avg Cases: ${Math.round(peak.AvgMaxCases).toLocaleString()} (${d3.timeFormat("%b %Y")(peak.Month)})`,
+                    align: "middle",
+                    wrap: 180
+                },
+                x: x(peak.Month),
+                y: y(peak.AvgMaxCases),
+                dy: -40, dx: -70
+            }];
+            const makeAnnotation = d3.annotation()
+                .annotations(annotationData)
+                .type(d3.annotationLabel);
+            g.append("g").attr("class", "annotation-group").call(makeAnnotation);
+
+            d3.select("#tooltip").style("display", "none");
         } else {
             // state is selected, then show that state's monthly max cases
             const stateData = covidRaw.filter(d =>
@@ -440,6 +455,7 @@ async function init() {
                 .domain([0, d3.max(maxCasesPerMonth, d => d.MaxCases) * 1.1])
                 .nice()
                 .range([height, 0]);
+
             g.append("g")
                 .attr("transform", `translate(0,${height})`)
                 .call(
@@ -449,22 +465,47 @@ async function init() {
                 )
                 .selectAll("text")
                 .attr("transform", "rotate(-45)").style("text-anchor", "end");
+
             g.append("g").call(d3.axisLeft(y));
+
             const lineCases = d3.line()
                 .x(d => x(d.Month))
                 .y(d => y(d.MaxCases));
+
             g.append("path")
                 .datum(maxCasesPerMonth)
                 .attr("class", "line")
                 .attr("d", lineCases)
                 .attr("stroke", "#fe0000")
                 .attr("fill", "none");
+
             g.selectAll(".point")
                 .data(maxCasesPerMonth).enter().append("circle")
                 .attr("class", "point")
                 .attr("cx", d => x(d.Month))
                 .attr("cy", d => y(d.MaxCases))
                 .attr("r", 2).attr("fill", "#fe0000");
+
+            // add annotation for the peak
+            const peak = maxCasesPerMonth.reduce((acc, d) => d.MaxCases > acc.MaxCases ? d : acc, maxCasesPerMonth[0]);
+            const annotationData = [{
+                note: {
+                    label: `Peak: ${peak.MaxCases.toLocaleString()} cases (${d3.timeFormat("%b %Y")(peak.Month)})`,
+                    align: "middle",
+                    wrap: 180
+                },
+                x: x(peak.Month),
+                y: y(peak.MaxCases),
+                dy: -40,
+                dx: -70
+            }];
+            const makeAnnotation = d3.annotation()
+                .annotations(annotationData)
+                .type(d3.annotationLabel);
+            g.append("g")
+                .attr("class", "annotation-group")
+                .call(makeAnnotation);
+
             svg.append("text")
                 .attr("x", margin.left + width / 2)
                 .attr("y", svgHeight - 10)
@@ -472,6 +513,7 @@ async function init() {
                 .attr("fill", "#000")
                 .style("font-weight", "bold")
                 .text("Month");
+
             svg.append("text")
                 .attr("transform", "rotate(-90)")
                 .attr("y", 1)
@@ -481,6 +523,7 @@ async function init() {
                 .attr("fill", "#000")
                 .style("font-weight", "bold")
                 .text("Max COVID-19 Cases");
+
             svg.append("text")
                 .attr("x", svgWidth / 2)
                 .attr("y", margin.top / 2)
