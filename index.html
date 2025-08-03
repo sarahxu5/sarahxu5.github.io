@@ -6,17 +6,56 @@
     <title>COVID-19 and U.S. State Regions</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
-        .scene { display: none; }
-        .active { display: grid; grid-template-columns: 2fr 1fr; grid-gap: 20px; align-items: start; }
-        svg { border: 1px solid #ccc; }
-        #state-select { margin: 10px 0; }
-        .button-container { margin-top: 20px; text-align: right; }
-        .chart-container { display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 24px; }
-        .text-container { display: flex; flex-direction: column; align-items: flex-start; }
-        .line { stroke: #fe0000; fill: none; }
-        .legend { font-size: 14px; margin-top: 10px; left: -100}
-        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
-        .legend-color-box { width: 20px; height: 20px; margin-right: 8px; }
+        .scene { 
+            display: none; 
+        }
+        .active { 
+            display: grid; 
+            grid-template-columns: 2fr 1fr; 
+            grid-gap: 20px; 
+            align-items: start; 
+        }
+        svg { 
+            border: 1px solid #ccc; 
+        }
+        #state-select { 
+            margin: 10px 0; 
+        }
+        .button-container { 
+            margin-top: 20px; 
+            text-align: right; 
+        }
+        .chart-container { 
+            display: flex; 
+            flex-direction: row; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 24px; 
+        }
+        .text-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-start; 
+        }
+        .line { 
+            stroke: #fe0000; 
+            fill: none; 
+        }
+        .legend { 
+            font-size: 14px; 
+            margin-top: 20px; 
+            left: -100;
+        }
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 2px; 
+        }
+        .legend-color-box { 
+            width: 25px; 
+            height: 25px; 
+            margin-right: 20px; 
+        }
     </style>
 </head>
 <body>
@@ -28,17 +67,17 @@
         <button class="scene-btn" data-scene="2">3</button>
     </div>
 
-    <!-- Scene 1: Average Max Cases Over Time (2020-2023) -->
+    <!-- Scene 1 (line chart) -->
     <div id="scene-1" class="scene active">
         <div class="chart-container">
             <div id="line-chart"></div>
         </div>
         <div class="text-container">
             <h2>Average Maximum COVID-19 Cases Across All U.S. States (2020-2023)</h2>
-            <p>This line chart shows the yearly average of maximum COVID-19 cases across all U.S. states, with 2023 being the peak.</p>
+            <p>This line chart shows the monthly average from 2020-2023 of maximum COVID-19 cases across all U.S. states, with March 2023 being the peak.</p>
         </div>
     </div>
-    <!-- Scene 2: Median Family Income vs COVID-19 Cases Scatter Plot -->
+    <!-- Scene 2 (scatter plot) -->
     <div id="scene-2" class="scene">
         <div class="chart-container">
             <div id="scatter-plot"></div>
@@ -49,7 +88,7 @@
             <p>Scatter plot showing each state's median family income versus max COVID-19 cases, colored by U.S. region. As seen in the chart, most of the lower income, high COVID-19 cases were located in the South.</p>
         </div>
     </div>
-    <!-- Scene 3: State Details + Interactive Line Chart -->
+    <!-- Scene 3 (interactive chart; reader-driven content) -->
     <div id="scene-3" class="scene">
         <div class="chart-container" style="position: relative;">
             <div id="state-line-chart"></div>
@@ -57,7 +96,7 @@
         </div>
         <div class="text-container">
             <h2>Explore Specific U.S. State COVID-19 Data</h2>
-            <p>Select a state to view detailed COVID-19 case trends and related demographic information.</p>
+            <p>Select a U.S. state to view detailed COVID-19 case trends and related information.</p>
             <select id="state-select">
                 <option value="">Select a State</option>
             </select>
